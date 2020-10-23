@@ -1,0 +1,153 @@
+apply plugin: 'java' // Provides tasks to build Java code
+
+// Run this task with: ./gradlew hello
+task hello {
+    doLast {
+        println "Hello, Gradle!"
+    }
+}
+
+// This task can be used to access the Gradle Wrapper files (before 4.8)
+// task wrapper(type: Wrapper) {
+//     gradleVersion = '2.6'
+// }
+
+// Since the wrapper task is now built-in, calling it generates the files.
+// It can be configured as below:
+wrapper {
+    gradleVersion = '6.5'
+}
+
+// Gradle has lifecycle:
+//   1. Initialisation phase - Configures multi-project builds, creates the Project instance
+//   2. Configuration phase - Tasks are created and configured (anything that's not an action: properties, dependencies...)
+//   3. Execution phase - Tasks that will be executed have their actions executed (doFirst & doLast)
+
+// The DSL is object oriented, the Project is the top-level object
+// Tasks are added to the project by default
+
+// Different ways of defining a task:
+
+project.task("run")
+task("walk")
+task "swim"
+task fly  // Quotes are optional
+
+
+// We can extend tasks that have been defined:
+
+run.description = "Use this task to run" // This appears next to the task name when listing tasks
+run.doLast {
+    println "I'm running"
+}
+
+walk.doFirst {
+    println "I'm walking"
+}
+
+
+// If we define another doLast method, it's appended to the existing one:
+
+run.doLast {
+    println("I've finished running!")
+}
+
+// > Task :run
+// I'm running
+// I've finished running!
+
+
+// We can also define everything in one go:
+// Note: the code inside the {} is known as a closure in Groovy
+
+task rest {
+    description "Have a good nap"
+    doFirst {
+        println "Sleeping ..."
+    }
+    doLast {
+        println "Wake up!"
+    }
+}
+
+
+// We can create dependencies between classes to create a hierarchy of execution:
+
+run.dependsOn walk
+rest.dependsOn run
+
+// ➜ ./gradlew run
+//
+// > Task :walk
+// I'm walking
+//
+// > Task :run
+// I'm running
+// I've finished running!
+
+
+// ➜ ./gradlew rest
+//
+// > Task :walk
+// I'm walking
+//
+// > Task :run
+// I'm running
+// I've finished running!
+//
+// > Task :rest
+// Sleeping ...
+// Wake up!
+
+
+// We can also do this when we define a task:
+
+task exercise {
+    dependsOn walk
+    dependsOn run
+
+    doLast {
+        println "Well done!"
+    }
+}
+
+// ➜ ./gradlew exercise
+//
+// > Task :walk
+// I'm walking
+//
+// > Task :run
+// I'm running
+// I've finished running!
+//
+// > Task :exercise
+// Well done!
+
+
+// Adding local properties (variables) to Gradle can be done with the def keyword:
+
+def projectVersion = '2.0'
+
+task printVersion {
+    def taskFriendlyName = 'Print Version'
+    doLast {
+        println "$taskFriendlyName - Project version is $projectVersion"
+    }
+}
+
+
+// We can add properties for multi-project Gradle files with extra properties, using the ext keyword:
+
+project.ext.globalVersion = '3.0'
+project.ext.globalProjectName = 'Gradle Fun'
+
+ext {
+    greeting = "Ahoy!"
+}
+
+task printGlobalVersion {
+    doLast {
+        println greeting
+        println "$project.ext.globalProjectName project version is $globalVersion"
+    }
+}
